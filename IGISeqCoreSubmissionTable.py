@@ -10,7 +10,6 @@ from collections import defaultdict
 from qPCR_calculations import qPCR_calculator
 
 
-
 def IGI_Seq_Table_generator(molarity,
                             original_qPCR_Ct_dir,
                             project_name,
@@ -22,12 +21,12 @@ def IGI_Seq_Table_generator(molarity,
                             output):
 
     Cdb = qPCR_calculator(original_qPCR_Ct_dir)
-    # print(Cdb)
 
     Vdb=Cdb.copy()
     Vdb['volume for pooling (uL)']=[molarity/x for x in Vdb['Concentration  of undiluted library (nM)']]
     Vdb['total volume']=round(sum(Vdb['volume for pooling (uL)']),2)
     Vdb['nM (Final)']=[round(molarity*len(Vdb)/x,2) for x in Vdb['total volume']]
+    Vdb.to_csv(os.path.dirname(output)+'/LibPoolingVolumes.csv',index=False)
 
     Sdb = Cdb[['Sample']]
     Sdb.insert(0, 'Project name/ID', project_name)
@@ -45,7 +44,6 @@ def IGI_Seq_Table_generator(molarity,
 
     Idb = pd.read_csv(index_db)
     Sdb2=Sdb.merge(Idb,on='User Sample Name',how='left')
-    # print(Sdb2)
     Sdb2.insert(2,'Well Location',Sdb2.pop('Well Location'))
     Sdb2.insert(3, 'Well number', [int(x[1:]) for x in Sdb2['Well Location']])
     Sdb2.insert(3, 'Well Letter', [x[0] for x in Sdb2['Well Location']])
@@ -98,6 +96,3 @@ if __name__ == '__main__':
                             args.nebindex_indexes_sheet,
                             args.outfile
                             )
-
-
-
