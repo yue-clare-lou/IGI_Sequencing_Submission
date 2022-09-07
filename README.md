@@ -2,7 +2,7 @@
 #### This python script helps generate the template form that is needed for submission
 
 ```
-usage: IGISeqCoreSubmissionTable.py [-h] [-m MOLARITY] [-db ORIGINAL_QPCR_CT_DIR] [-pn PROJECT_NAME] [-ip INDEX_PLATE] [-l LIBRARY_TYPE] [-s SAMPLE_STATUS] [-idb INDEX_DB]
+usage: IGISeqCoreSubmissionTable.py [-h] [-m MOLARITY] [-d ORIGINAL_QPCR_CT_DIR] [-pn PROJECT_NAME] [-ip INDEX_PLATE] [-l LIBRARY_TYPE] [-s SAMPLE_STATUS] [-idb INDEX_DB]
                                     [-n NEBINDEX_INDEXES_SHEET] [-o OUTFILE] [-pl | --pooling_only | --no-pooling_only]
 
 Generating the table required by the IGI core sequencing facility
@@ -11,8 +11,8 @@ GENERAL ARGUMENTS:
   -h                    show this help message and exit
   -m MOLARITY, --molarity MOLARITY
                         molarity for pooling libraries (default: 25)
-  -db ORIGINAL_QPCR_CT_DIR, --original_qPCR_Ct_dir ORIGINAL_QPCR_CT_DIR
-                        the dataframe that contains your library concentrations in nM (default: )
+  -d ORIGINAL_QPCR_CT_DIR, --original_qPCR_Ct_dir ORIGINAL_QPCR_CT_DIR
+                        the directory path where the qPCR Ct file was stored (default: )
   -pn PROJECT_NAME, --project_name PROJECT_NAME
                         project name (required by IGI core sequencer) (default: )
   -ip INDEX_PLATE, --index_plate INDEX_PLATE
@@ -28,6 +28,6 @@ GENERAL ARGUMENTS:
   -o OUTFILE, --outfile OUTFILE
                         Output file (default: ./NGS_Library_Import_Form.csv)
   -pl, --pooling_only, --no-pooling_only
-                        If True, then skip generating the submission table (default: None)
+                        If --pooling_only, then skip generating the submission table (default: None)
                         
 ```

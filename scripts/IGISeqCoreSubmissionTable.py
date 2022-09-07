@@ -88,7 +88,7 @@ if __name__ == '__main__':
     GenArgs = parser.add_argument_group('GENERAL ARGUMENTS')
     GenArgs.add_argument('-h', action="help",help="show this help message and exit")
     GenArgs.add_argument('-m','--molarity', default=25, help='molarity for pooling libraries')
-    GenArgs.add_argument('-db', '--original_qPCR_Ct_dir', default='', help='the dataframe that contains your library concentrations in nM')
+    GenArgs.add_argument('-d', '--original_qPCR_Ct_dir', default='', help='the directory path where the qPCR Ct file was stored')
     GenArgs.add_argument('-pn', '--project_name', default='', help='project name (required by IGI core sequencer)')
     GenArgs.add_argument('-ip', '--index_plate', default='NEBNext E6441', help='the plate where i5/i7 were taken from')
     GenArgs.add_argument('-l', '--library_type', default='Metagenomic', help='the type of libraries (required by IGI core sequencer)')
@@ -96,7 +96,7 @@ if __name__ == '__main__':
     GenArgs.add_argument('-idb', '--index_db', default='sheets/sample2indices.csv',help='2-column sample and indices table (column names: User Sample Name and Well Location)')
     GenArgs.add_argument('-n', '--nebindex_indexes_sheet', default='sheets/NEBNEXT_indexes_Sheet1.csv',help='NEBNext indexes sheet')
     GenArgs.add_argument('-o','--outfile', default='./NGS_Library_Import_Form.csv', help='Output file')
-    GenArgs.add_argument('-pl', '--pooling_only', action=argparse.BooleanOptionalAction, help='If True, then skip generating the submission table')
+    GenArgs.add_argument('-pl', '--pooling_only', action=argparse.BooleanOptionalAction, help='If --pooling_only, then skip generating the submission table')
     args = parser.parse_args()
 
     IGI_Seq_Table_generator(args.molarity,
