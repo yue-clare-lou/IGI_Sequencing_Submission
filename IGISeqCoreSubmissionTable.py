@@ -7,11 +7,12 @@ from subprocess import call
 import numpy as np
 import pandas as pd
 from collections import defaultdict
+from qPCR_calculations import qPCR_calculator
 
 
 
 def IGI_Seq_Table_generator(molarity,
-                            lib_conc_table,
+                            original_qPCR_Ct_dir,
                             project_name,
                             index_plate_name,
                             lib_type,
@@ -19,7 +20,9 @@ def IGI_Seq_Table_generator(molarity,
                             index_db,
                             nebindex_indexes_sheet,
                             output):
-    Cdb = pd.read_csv(lib_conc_table)
+
+    Cdb = qPCR_calculator(original_qPCR_Ct_dir)
+    # print(Cdb)
 
     Vdb=Cdb.copy()
     Vdb['volume for pooling (uL)']=[molarity/x for x in Vdb['Concentration  of undiluted library (nM)']]
@@ -42,6 +45,7 @@ def IGI_Seq_Table_generator(molarity,
 
     Idb = pd.read_csv(index_db)
     Sdb2=Sdb.merge(Idb,on='User Sample Name',how='left')
+    # print(Sdb2)
     Sdb2.insert(2,'Well Location',Sdb2.pop('Well Location'))
     Sdb2.insert(3, 'Well number', [int(x[1:]) for x in Sdb2['Well Location']])
     Sdb2.insert(3, 'Well Letter', [x[0] for x in Sdb2['Well Location']])
@@ -74,7 +78,7 @@ if __name__ == '__main__':
     GenArgs = parser.add_argument_group('GENERAL ARGUMENTS')
     GenArgs.add_argument('-h', action="help",help="show this help message and exit")
     GenArgs.add_argument('-m','--molarity', default=25, help='molarity for pooling libraries')
-    GenArgs.add_argument('-cdb', '--lib_conc_table', default='sheets/qPCR_LibPrepConcentrations.csv', help='the dataframe that contains your library concentrations in nM')
+    GenArgs.add_argument('-db', '--original_qPCR_Ct_dir', default='', help='the dataframe that contains your library concentrations in nM')
     GenArgs.add_argument('-pn', '--project_name', default='', help='project name (required by IGI core sequencer)')
     GenArgs.add_argument('-ip', '--index_plate', default='NEBNext E6441', help='the plate where i5/i7 were taken from')
     GenArgs.add_argument('-l', '--library_type', default='Metagenomic', help='the type of libraries (required by IGI core sequencer)')
@@ -85,7 +89,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     IGI_Seq_Table_generator(args.molarity,
-                            args.lib_conc_table,
+                            args.original_qPCR_Ct_dir,
                             args.project_name,
                             args.index_plate,
                             args.library_type,
