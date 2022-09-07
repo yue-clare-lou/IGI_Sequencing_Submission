@@ -10,7 +10,7 @@ from collections import defaultdict
 from scipy.stats import linregress
 
 
-def qPCR_calculator(original_qPCR_Ct_dir):
+def qPCR_calculator(original_qPCR_Ct_dir, outfile=None):
 
     # Pre-Step 1a: rename
     original_qPCR_Ct_dir=os.path.abspath(original_qPCR_Ct_dir)
@@ -73,7 +73,6 @@ def qPCR_calculator(original_qPCR_Ct_dir):
 
     table = defaultdict(list)
     for i, item in enumerate(['slope', 'intercept', 'rvalue', 'pvalue', 'stderr']):
-        # print(i,item)
         table[item].append(res[i])
 
     Rdb = pd.DataFrame(table)
@@ -112,24 +111,25 @@ def qPCR_calculator(original_qPCR_Ct_dir):
                                                        zip(Cdb['Size-adjusted concentration (pM)'], \
                                                            Cdb['Dilution'])]
     Cdb_final = Cdb[['Sample', 'Concentration  of undiluted library (nM)']]
+
+    if outfile is not None:
+        Cdb_final.to_csv(outfile, index=False)
+        return
+
     return Cdb_final
 
-    # Cdb_final.to_csv(outfile, index=False)
+
+if __name__ == '__main__':
+
+    parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter,add_help=False,
+                                     description='Calculate library concentrations from qPCR data!')
+
+    # General Arguments
+    GenArgs = parser.add_argument_group('GENERAL ARGUMENTS')
+    GenArgs.add_argument('-h', action="help",help="show this help message and exit")
+    GenArgs.add_argument('-i','--qPCR_dir', help='the directory path where the qPCR Ct file was stored')
+    GenArgs.add_argument('-o','--outfile', default='qPCR_LibCon.csv', help='Output file')
+    args = parser.parse_args()
 
 
-# if __name__ == '__main__':
-
-    # parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter,add_help=False,
-    #                                  description='Calculate library concentrations from qPCR data!')
-    #
-    # # General Arguments
-    # GenArgs = parser.add_argument_group('GENERAL ARGUMENTS')
-    # GenArgs.add_argument('-h', action="help",help="show this help message and exit")
-    # GenArgs.add_argument('-i','--qPCR_dir', help='the directory path where the qPCR Ct file was stored')
-    # GenArgs.add_argument('-o','--outfile', default='qPCR_LibCon.csv', help='Output file')
-    # args = parser.parse_args()
-    #
-    #
-    # qPCR_calculator(args.qPCR_dir,args.outfile)
-
-
+    qPCR_calculator(args.qPCR_dir, args.outfile)
