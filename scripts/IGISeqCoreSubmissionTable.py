@@ -8,6 +8,8 @@ import numpy as np
 import pandas as pd
 from collections import defaultdict
 from qPCR_calculations import qPCR_calculator
+import warnings
+warnings.filterwarnings("ignore")
 
 
 def IGI_Seq_Table_generator(molarity,
@@ -18,23 +20,24 @@ def IGI_Seq_Table_generator(molarity,
                             sample_status,
                             index_db,
                             nebindex_indexes_sheet,
-                            output,
+                            output_dir,
                             pooling_only=False):
 
 
-    Cdb = qPCR_calculator(original_qPCR_Ct_dir)
+    Cdb = qPCR_calculator(original_qPCR_Ct_dir,output_dir)
 
     if Cdb is not None:
 
         Vdb=Cdb.copy()
-        Vdb['starting molarity (nM)']=molarity
-        Vdb['volume for pooling (uL)']=[molarity/x for x in Vdb['Concentration  of undiluted library (nM)']]
+        Vdb['starting molarity (nM)']=int(molarity)
+        Vdb['volume for pooling (uL)']=[int(molarity)/x for x in Vdb['Concentration  of undiluted library (nM)']]
         Vdb['total volume']=round(sum(Vdb['volume for pooling (uL)']),2)
-        Vdb['nM (Final)']=[round(molarity*len(Vdb)/x,2) for x in Vdb['total volume']]
+        Vdb['nM (Final)']=[round(int(molarity)*len(Vdb)/x,2) for x in Vdb['total volume']]
         Vdb['original_file_name']=Vdb.pop('original_file_name')
-        Vdb.to_csv(os.path.dirname(os.path.abspath(output))+'/LibPoolingVolumes.csv',index=False)
+        Vdb.to_csv(os.path.abspath(output_dir)+'/results/LibPoolingVolumes.csv',index=False)
 
         if pooling_only == True:
+            print('Done!')
             return
 
         else:
@@ -75,7 +78,10 @@ def IGI_Seq_Table_generator(molarity,
             DIdb_for_submission = DIdb.drop(columns=['Well Letter', 'Well number', 'User Sample Name num'])
             DIdb_for_submission = DIdb_for_submission.rename(columns={'i5 Sequence FWD': 'i5 Sequence'})
             DIdb_for_submission = DIdb_for_submission.drop(columns=['i5 Sequence REV'])
-            DIdb_for_submission.to_csv(output, index=False)
+            DIdb_for_submission.to_csv(os.path.abspath(output_dir)+'/results/NGS_Library_Import_Form.csv', index=False)
+
+            print('Done!')
+
             return
 
 
@@ -95,7 +101,7 @@ if __name__ == '__main__':
     GenArgs.add_argument('-s', '--sample_status', default='Pooled Library',help='sample status (required by IGI core sequencer)')
     GenArgs.add_argument('-idb', '--index_db', default='sheets/sample2indices.csv',help='2-column sample and indices table (column names: User Sample Name and Well Location)')
     GenArgs.add_argument('-n', '--nebindex_indexes_sheet', default='sheets/NEBNEXT_indexes_Sheet1.csv',help='NEBNext indexes sheet')
-    GenArgs.add_argument('-o','--outfile', default='./NGS_Library_Import_Form.csv', help='Output file')
+    GenArgs.add_argument('-o','--output_dir', default='./', help='Output file directory')
     GenArgs.add_argument('-pl', '--pooling_only', action=argparse.BooleanOptionalAction, help='If --pooling_only, then skip generating the submission table')
     args = parser.parse_args()
 
@@ -107,6 +113,6 @@ if __name__ == '__main__':
                             args.sample_status,
                             args.index_db,
                             args.nebindex_indexes_sheet,
-                            args.outfile,
+                            args.output_dir,
                             args.pooling_only,
                             )

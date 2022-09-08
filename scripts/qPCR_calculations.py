@@ -8,9 +8,14 @@ import numpy as np
 import pandas as pd
 from collections import defaultdict
 from scipy.stats import linregress
+import seaborn as sns
+import matplotlib
+from matplotlib import pyplot as plt
+from matplotlib.backends.backend_pdf import PdfPages
+sns.set_style('white')
 
 
-def qPCR_calculator(original_qPCR_Ct_dir, outfile=None):
+def qPCR_calculator(original_qPCR_Ct_dir, output_dir):
 
     # Pre-Step 1a: rename
     original_qPCR_Ct_dir=os.path.abspath(original_qPCR_Ct_dir)
@@ -26,7 +31,7 @@ def qPCR_calculator(original_qPCR_Ct_dir, outfile=None):
     else:
         original_name = glob.glob("{}/*Quantitation Ct*".format(original_qPCR_Ct_dir))[0]
         original_file_name=os.path.basename(original_name)
-        new_name = "_".join(os.path.basename(original_name).split(" ")[4:])
+        new_name = "_".join(os.path.basename(original_name).split(" ")[4:7])
         new_name_full_path = os.path.dirname(original_name) + '/intermediats/' + new_name
 
         mk_new_dir_cmd='mkdir {}/intermediats'.format(original_qPCR_Ct_dir)
@@ -36,23 +41,37 @@ def qPCR_calculator(original_qPCR_Ct_dir, outfile=None):
         else:
             call(mk_new_dir_cmd, shell=True)
 
+
         rename_cmd = 'cp "{}" {}'.format(original_name, new_name_full_path)
         call(rename_cmd, shell=True)
 
-        # Pre-Step 1b: ODS to XLSX conversion
-        import jpype
-        import asposecells
-        jpype.startJVM()
-        from asposecells.api import Workbook
-        workbook = Workbook(new_name_full_path)
-        workbook.save(new_name_full_path.replace('xlsx', 'xls'))
-        jpype.shutdownJVM()
+        mk_output_result_cmd = 'mkdir {}/results'.format(output_dir)
 
-        # Pre-Step 1c: Read Ct table
-        CTdb = pd.read_excel(new_name_full_path.replace('xlsx', 'xls'))
+        if os.path.isdir('{}/results'.format(output_dir)) == True:
+            print("the results directory already exists! Skipping...")
+        else:
+            call(mk_output_result_cmd, shell=True)
+
+        try:
+            CTdb = pd.read_csv(new_name_full_path)
+
+        except Exception:
+            # ODS to XLSX conversion
+
+            import jpype
+            import asposecells
+            jpype.startJVM()
+            from asposecells.api import Workbook
+
+            workbook = Workbook(new_name_full_path)
+            workbook.save(new_name_full_path.replace('xlsx', 'xls'))
+            jpype.shutdownJVM()
+
+            CTdb = pd.read_excel(new_name_full_path.replace('xlsx', 'xls'))
+
         CTdb = CTdb.drop(columns=list(CTdb.filter(regex='Unnamed')))
         CTdb['Log Starting Quantity'] = [float(x) for x in CTdb['Log Starting Quantity']]
-        CTdb['original_file_name']=original_file_name
+        CTdb['original_file_name'] = original_file_name
 
         # Step 1: Calculate intercept & slope
 
@@ -95,6 +114,39 @@ def qPCR_calculator(original_qPCR_Ct_dir, outfile=None):
         Rdb['R-squared'] = r_sq
         Rdb['efficiency (%)'] = efficiency
 
+        Rdb.to_csv(os.path.abspath(output_dir)+'/results/qPCR_Quantification_metrics.csv',index=False)
+
+        # plot
+
+        from matplotlib.ticker import MultipleLocator
+        from matplotlib.ticker import MaxNLocator
+
+        fig = plt.figure(figsize=(6.5, 4.5))
+        ax = plt.subplot(111)
+
+        ax.xaxis.set_major_locator(MaxNLocator(6))
+        ax.yaxis.set_major_locator(MaxNLocator(4))
+
+        ax.xaxis.set_minor_locator(MultipleLocator(1))
+        ax.yaxis.set_minor_locator(MultipleLocator(1))
+
+        plt.plot(Qdb['Log Starting Quantity'],Qdb['Average Cq'], 'o')
+
+        for idx, val in enumerate(Qdb['Average Cq']):
+            ax.text(-idx + 1.1, val + 1.5, str(round(val, 2)))
+
+        plt.plot(Qdb['Log Starting Quantity'],res.intercept + res.slope * ((Qdb['Log Starting Quantity'])),
+                 'r', label='y={:.4f}x+{:.4f}; \nR2={:.6f}'.format(res.slope, res.intercept, r_sq))
+        plt.axvline(x=0, color='gray', linestyle='--')
+        plt.legend(fontsize=11, frameon=True, bbox_to_anchor=(1.01, 1.025))
+
+        plt.xlabel('Log (Conc in pM)')
+        plt.ylabel('Average Cq')
+        plt.ylim(2, 35)
+        plt.xlim(-4.5, 2.5)
+        plt.tight_layout()
+        plt.savefig(os.path.abspath(output_dir)+'/results/qPCR_Quantification_metrics.pdf',bbox_inchesstr='tight',format='pdf')
+
         # Step 2: Calculate library concentration
 
         print("Step 2: Calculate library concentration")
@@ -124,11 +176,11 @@ def qPCR_calculator(original_qPCR_Ct_dir, outfile=None):
                                                                Cdb['Dilution'])]
         Cdb_final = Cdb[['Sample', 'Concentration  of undiluted library (nM)','original_file_name']]
 
-        if outfile is not None:
-            Cdb_final.to_csv(outfile, index=False)
-            return
+        rm_intermediate_dir_cmd = 'rm -r {}/intermediats'.format(original_qPCR_Ct_dir)
+        call(rm_intermediate_dir_cmd,shell=True)
 
-        return Cdb_final
+        Cdb_final.to_csv(os.path.abspath(output_dir)+'/results/qPCR_LibConc.csv', index=False)
+        return
 
 
 if __name__ == '__main__':
@@ -140,8 +192,8 @@ if __name__ == '__main__':
     GenArgs = parser.add_argument_group('GENERAL ARGUMENTS')
     GenArgs.add_argument('-h', action="help",help="show this help message and exit")
     GenArgs.add_argument('-i','--qPCR_dir', help='the directory path where the qPCR Ct file was stored')
-    GenArgs.add_argument('-o','--outfile', default='qPCR_LibCon.csv', help='Output file')
+    GenArgs.add_argument('-o','--output_dir', default='./', help='Output file directory')
     args = parser.parse_args()
 
 
-    qPCR_calculator(args.qPCR_dir, args.outfile)
+    qPCR_calculator(args.qPCR_dir, args.output_dir)
