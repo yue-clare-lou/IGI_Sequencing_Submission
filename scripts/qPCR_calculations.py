@@ -155,7 +155,7 @@ def qPCR_calculator(original_qPCR_Ct_dir, output_dir):
                        (CTdb['Fluor'].isin(['SYBR']))].reset_index(drop=True)
 
         Cdb = CTdb_sp[['Sample', 'C(t) Mean','original_file_name']]
-        Cdb['Sample'] = [int(x) for x in Cdb['Sample']]
+        Cdb['Sample'] = [float(x.split("-")[0]) for x in Cdb['Sample']]
         Cdb.insert(1, 'Dilution', 10 ** 4)
         Cdb.insert(2, 'Average fragment length (bp)', 650)
 
@@ -180,20 +180,20 @@ def qPCR_calculator(original_qPCR_Ct_dir, output_dir):
         call(rm_intermediate_dir_cmd,shell=True)
 
         Cdb_final.to_csv(os.path.abspath(output_dir)+'/results/qPCR_LibConc.csv', index=False)
-        return
+        return Cdb_final
 
 
-if __name__ == '__main__':
-
-    parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter,add_help=False,
-                                     description='Calculate library concentrations from qPCR data!')
-
-    # General Arguments
-    GenArgs = parser.add_argument_group('GENERAL ARGUMENTS')
-    GenArgs.add_argument('-h', action="help",help="show this help message and exit")
-    GenArgs.add_argument('-i','--qPCR_dir', help='the directory path where the qPCR Ct file was stored')
-    GenArgs.add_argument('-o','--output_dir', default='./', help='Output file directory')
-    args = parser.parse_args()
-
-
-    qPCR_calculator(args.qPCR_dir, args.output_dir)
+# if __name__ == '__main__':
+#
+#     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter,add_help=False,
+#                                      description='Calculate library concentrations from qPCR data!')
+#
+#     # General Arguments
+#     GenArgs = parser.add_argument_group('GENERAL ARGUMENTS')
+#     GenArgs.add_argument('-h', action="help",help="show this help message and exit")
+#     GenArgs.add_argument('-i','--qPCR_dir', help='the directory path where the qPCR Ct file was stored')
+#     GenArgs.add_argument('-o','--output_dir', default='./', help='Output file directory')
+#     args = parser.parse_args()
+#
+#
+#     qPCR_calculator(args.qPCR_dir, args.output_dir)

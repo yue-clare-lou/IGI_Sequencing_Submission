@@ -34,7 +34,9 @@ def IGI_Seq_Table_generator(molarity,
         Vdb['total volume']=round(sum(Vdb['volume for pooling (uL)']),2)
         Vdb['nM (Final)']=[round(int(molarity)*len(Vdb)/x,2) for x in Vdb['total volume']]
         Vdb['original_file_name']=Vdb.pop('original_file_name')
+
         Vdb.to_csv(os.path.abspath(output_dir)+'/results/LibPoolingVolumes.csv',index=False)
+
 
         if pooling_only == True:
             print('Done!')
@@ -46,7 +48,7 @@ def IGI_Seq_Table_generator(molarity,
             Sdb.insert(0, 'Project name/ID', project_name)
             Sdb.insert(1, 'Plate number/name', index_plate_name)
             # Sdb.insert(2, 'Well Location', 'X')
-            Sdb.insert(3, 'User Sample Name', ["_".join([x, str(y)]) for x, y in zip(Sdb['Project name/ID'], Sdb['Sample'])])
+            Sdb.insert(3, 'User Sample Name', ["_".join([x, str(int(y))]) for x, y in zip(Sdb['Project name/ID'], Sdb['Sample'])])
             Sdb = Sdb.drop(columns=['Sample'])
             Sdb['Type of Library'] = lib_type
             Sdb['Sample Status'] = sample_status
@@ -83,6 +85,7 @@ def IGI_Seq_Table_generator(molarity,
             print('Done!')
 
             return
+    return
 
 
 if __name__ == '__main__':
