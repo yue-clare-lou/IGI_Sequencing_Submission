@@ -155,7 +155,7 @@ def qPCR_calculator(original_qPCR_Ct_dir, output_dir):
                        (CTdb['Fluor'].isin(['SYBR']))].reset_index(drop=True)
 
         Cdb = CTdb_sp[['Sample', 'C(t) Mean','original_file_name']]
-        Cdb['Sample'] = [float(x.split("-")[0]) for x in Cdb['Sample']]
+        Cdb['Sample'] = [float(".".join(x.split("-"))) for x in Cdb['Sample']]
         Cdb.insert(1, 'Dilution', 10 ** 4)
         Cdb.insert(2, 'Average fragment length (bp)', 650)
 
