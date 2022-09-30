@@ -145,7 +145,7 @@ def qPCR_calculator(original_qPCR_Ct_dir, output_dir):
         plt.ylim(2, 35)
         plt.xlim(-4.5, 2.5)
         plt.tight_layout()
-        plt.savefig(os.path.abspath(output_dir)+'/results/qPCR_Quantification_metrics.pdf',bbox_inchesstr='tight',format='pdf')
+        plt.savefig(os.path.abspath(output_dir)+'/results/qPCR_Quantification_metrics.pdf',bbox_inches='tight',format='pdf')
 
         # Step 2: Calculate library concentration
 
